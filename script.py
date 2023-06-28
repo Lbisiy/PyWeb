@@ -1,10 +1,9 @@
 import django
 import os
+from store.models import Product, Category
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
 django.setup()
-
-from store.models import Product, Category
 
 
 if __name__ == '__main__':
