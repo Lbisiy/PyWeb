@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 # Create your views here.
 from django.shortcuts import render
@@ -104,3 +104,13 @@ class ProductSingleView(View):
                                })
 
         return render(request, 'store/product-single.html', context=data[id])
+
+
+class WishlistView(View):
+
+    def get(self, request):
+        if request.user.is_authenticated:
+           # код который необходим для обработчика
+            return render(request, "store/wishlist.html")
+       # Иначе отправляет авторизироваться
+        return redirect('login:login')  # from django.shortcuts import redirect
