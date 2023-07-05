@@ -7,11 +7,50 @@ from django.http import HttpResponse
 from django.db.models import OuterRef, Subquery, F, ExpressionWrapper, DecimalField, Case, When
 from django.utils import timezone
 
-from store.models import Product, Discount, Cart
+from store.models import Product, Discount, Cart, Wishlist
 from rest_framework import viewsets, response
 from rest_framework.permissions import IsAuthenticated
-from .serializers import CartSerializer
+from .serializers import CartSerializer, WishlistSerializer
 from django.shortcuts import get_object_or_404
+
+
+class WishlistAddView(View):
+    def get(self, request, id):
+        if request.user.is_authenticated:
+            if Wishlist.objects.filter(product_id=id):
+                return redirect('store:shop')
+            else:
+                Wishlist.objects.create(user=request.user, product_id=id)
+                return redirect('store:shop')
+        else:
+            return redirect('login:login')
+
+
+class WishlistView(View):
+    def get(self, request):
+        if request.user.is_authenticated:
+            data = Wishlist.objects.filter(user=request.user)
+           # код который необходим для обработчика
+            return render(request, "store/wishlist.html", {'data': data})
+       # Иначе отправляет авторизироваться
+        return redirect('login:login')  # from django.shortcuts import redirect
+
+
+class WishlistDeleteView(View):
+    def get(self, request, id):
+        Wishlist.objects.filter(user=request.user, id=id).delete()
+        data = Wishlist.objects.filter(user=request.user)
+       # return render(request, "store/wishlist.html", {'data': data})
+        return redirect('store:wishlist')
+
+
+class WishlistViewSet(viewsets.ModelViewSet):
+    queryset = Wishlist.objects.all()
+    serializer_class = WishlistSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)
 
 
 class CartViewSet(viewsets.ModelViewSet):
@@ -103,14 +142,4 @@ class ProductSingleView(View):
                                'url': data.image.url,
                                })
 
-        return render(request, 'store/product-single.html', context=data[id])
-
-
-class WishlistView(View):
-
-    def get(self, request):
-        if request.user.is_authenticated:
-           # код который необходим для обработчика
-            return render(request, "store/wishlist.html")
-       # Иначе отправляет авторизироваться
-        return redirect('login:login')  # from django.shortcuts import redirect
+        # return render(request, 'store/product-single.html', context=data[id])
